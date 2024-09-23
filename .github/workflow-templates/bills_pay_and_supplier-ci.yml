@@ -1,0 +1,32 @@
+name: bills test and linting
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+        python-version: "3.11"
+
+      - name: Install requirements.txt
+        run: pip3 install -r requirements.txt
+        working-directory: .
+
+      - name: Lint with black
+        run: black ./bills/
+        working-directory: .
+
+      - name: test
+        run: | 
+          export COVERAGE_RCFILE=.coveragerc
+          pytest ./test -s -q -vv
+        working-directory: .
