@@ -39,6 +39,7 @@ Este é um projeto CRUD (Create, Read, Update, Delete) desenvolvido com FastAPI,
    uvicorn app.main:app --reload
 
 # Estrutura do Projeto
+```
 crud_fastapi/
 │
 ├── alembic/              # Migrações do banco
@@ -51,5 +52,6 @@ crud_fastapi/
 ├── tests/                # Testes do projeto
 ├── requirements.txt      # Dependências do projeto
 └── README.md             # Documentação do projeto
+```
 
    
