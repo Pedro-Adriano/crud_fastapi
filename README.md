@@ -24,7 +24,6 @@ Este é um projeto CRUD (Create, Read, Update, Delete) desenvolvido com FastAPI,
 2. Crie um ambiente virtual e ative:
     python3 -m venv venv
     source venv/bin/activate  # Em sistemas Unix
-    # ou
     venv\Scripts\activate  # Em Windows
 
 3. Instale as dependências:
@@ -39,7 +38,7 @@ Este é um projeto CRUD (Create, Read, Update, Delete) desenvolvido com FastAPI,
 6. Inicie o servidor utilizando o Uvicorn:
    uvicorn app.main:app --reload
 
-Estrutura do Projeto
+# Estrutura do Projeto
 crud_fastapi/
 │
 ├── alembic/              # Migrações do banco
