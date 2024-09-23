@@ -1,148 +1,56 @@
-from datetime import datetime, date
+# CRUD FastAPI Project
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import extract
-from typing import List, Type
-from sqlalchemy.orm import Session
+Este é um projeto CRUD (Create, Read, Update, Delete) desenvolvido com FastAPI, utilizando PostgreSQL como banco de dados e SQLAlchemy para a modelagem de dados.
 
-from app.models.bills_models import ContaPagarReceber
-from shared.dependencies import get_db
-from shared.exceptions import NotFound
-from app.models.schema import (
-    ContaPagarReceberResponse,
-    ContaPagarReceberRequest,
-    PrevisaoPorMes,
-)
-from app.services.bills_service import BillsService
+## Tecnologias Utilizadas
 
-router = APIRouter(prefix="/contas-a-pagar-e-receber")
+- **[FastAPI](https://fastapi.tiangolo.com/)**: Versão 0.114.2
+- **[Uvicorn](https://www.uvicorn.org/)**: Versão 0.30.6 (servidor ASGI)
+- **[Requests](https://docs.python-requests.org/)**: Versão 2.32.3 (para requisições HTTP)
+- **[SQLAlchemy](https://www.sqlalchemy.org/)**: Versão 2.0.34 (ORM para a base de dados)
+- **[psycopg2](https://www.psycopg.org/)**: Versão 2.9.9 (driver PostgreSQL)
+- **[Alembic](https://alembic.sqlalchemy.org/)**: Versão 1.13.2 (ferramenta de migração de banco de dados)
+- **[Black](https://black.readthedocs.io/en/stable/)**: Versão 24.8.0 (formatação de código)
+- **[Pytest](https://docs.pytest.org/en/7.4.x/)**: Versões 7.4.2 e 8.3.3 (ferramenta de testes)
+- **[Pytest-cov](https://pytest-cov.readthedocs.io/en/latest/)**: Versão 4.1.0 (geração de relatório de cobertura de testes)
 
+## Instalação
 
-@router.get("/previsao_gastos_do_mes", response_model=List[PrevisaoPorMes])
-def list_anual_bills_for_month(db: Session = Depends(get_db), ano=date.today().year):
-    return BillsService().list_bills_month_in_year(db, ano)
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/Pedro-Adriano/crud_fastapi.git
+   cd crud_fastapi
 
+2. Crie um ambiente virtual e ative:
+    python3 -m venv venv
+    source venv/bin/activate  # Em sistemas Unix
+    # ou
+    venv\Scripts\activate  # Em Windows
 
-@router.get("", response_model=List[ContaPagarReceberResponse])
-def list_bills(db: Session = Depends(get_db)) -> list[Type[ContaPagarReceber]]:
-    return BillsService().list_bills(db)
+3. Instale as dependências:
+   pip install -r requirements.txt
 
+4. Defina as variáveis de ambiente com as informações do banco:
+   export DATABASE_URL=postgresql://usuario:senha@localhost/nome_do_banco
 
-@router.get("/{id_conta}", response_model=ContaPagarReceberResponse)
-def list_bill_by_id(
-    id_conta: int, db: Session = Depends(get_db)
-) -> list[ContaPagarReceber]:
-    return BillsService().list_bill_by_id(db, id_conta)
+5. Execute as migrações do banco:
+   alembic upgrade head
 
-@router.post("", response_model=ContaPagarReceberResponse, status_code=201)
-def create_bill(
-    conta_a_pagar_e_receber_request: ContaPagarReceberRequest,
-    db: Session = Depends(get_db),
-) -> ContaPagarReceberResponse:
-    print(1111)
-    BillsService().launch_excecao_when_ultrapass_number_of_records(
-        conta_a_pagar_e_receber_request, db
-    )
-    print(2222)
-    BillsService()._valid_supplier(conta_a_pagar_e_receber_request, db)
-    print(3333)
-    BillsService()._create_bill(conta_a_pagar_e_receber_request, db)
-    print(4444)
-    return ContaPagarReceberResponse
+6. Inicie o servidor utilizando o Uvicorn:
+   uvicorn app.main:app --reload
 
+Estrutura do Projeto
+crud_fastapi/
+│
+├── alembic/              # Migrações do banco
+├── app/
+│   ├── api/              # Rotas da API
+│   ├── models/           # Modelos do SQLAlchemy
+│   ├── crud.py           # Funções CRUD
+│   └── main.py           # Ponto de entrada da aplicação
+│
+├── tests/                # Testes do projeto
+├── requirements.txt      # Dependências do projeto
+└── README.md             # Documentação do projeto
 
-@router.put("/{id_conta}", response_model=ContaPagarReceberResponse, status_code=200)
-def atualizar_conta(
-    id_conta: int,
-    conta_a_pagar_e_receber_request: ContaPagarReceberRequest,
-    db: Session = Depends(get_db),
-) -> ContaPagarReceberResponse:
-
-    _valida_fornecedor(conta_a_pagar_e_receber_request, db)
-
-    conta_a_receber: ContaPagarReceber = busca_conta_por_id(id_conta, db)
-    conta_a_receber.tipo = conta_a_pagar_e_receber_request.tipo
-    conta_a_receber.valor = conta_a_pagar_e_receber_request.valor
-    conta_a_receber.descricao = conta_a_pagar_e_receber_request.descricao
-
-    db.add(conta_a_receber)
-    db.commit()
-    db.refresh(conta_a_receber)
-    return conta_a_receber
-
-
-@router.post(
-    "/{id_conta}/baixar", response_model=ContaPagarReceberResponse, status_code=200
-)
-def baixar_conta(
-    id_conta: int,
-    db: Session = Depends(get_db),
-) -> ContaPagarReceberResponse:
-
-    conta_a_receber: ContaPagarReceber = busca_conta_por_id(id_conta, db)
-
-    if (
-        not conta_a_receber.esta_baixada
-        and conta_a_receber.valor != conta_a_receber.valor_baixa
-    ):
-        conta_a_receber.data_baixa = datetime.now()
-        conta_a_receber.esta_baixada = True
-        conta_a_receber.valor_baixa = conta_a_receber.valor
-
-        db.add(conta_a_receber)
-        db.commit()
-        db.refresh(conta_a_receber)
-    return conta_a_receber
-
-
-@router.delete("/{id_conta}", status_code=204)
-def remover_conta(
-    id_conta: int,
-    db: Session = Depends(get_db),
-) -> None:
-
-    db.delete(busca_conta_por_id(id_conta, db))
-    db.commit()
-
-
-def busca_conta_por_id(id_conta: int, db: Session) -> ContaPagarReceber:
-    conta_a_receber = db.query(ContaPagarReceber).get(id_conta)
-
-    if not conta_a_receber:
-        raise NotFound("Conta a pagar e receber")
-
-    return conta_a_receber
-
-
-def _valida_fornecedor(conta_a_pagar_e_receber_request, db):
-    if conta_a_pagar_e_receber_request.fornecedor_cliente_id:
-        contas_a_pagar_e_receber = db.query(
-            conta_a_pagar_e_receber_request.fornecedor_cliente_id
-        )
-        if not contas_a_pagar_e_receber:
-            raise HTTPException(status_code=422, detail="Fornecedor não cadastrado")
-
-
-def lanca_excecao_quando_ultrapassar_numero_de_registros(
-    conta_a_pagar_receber_request: ContaPagarReceberRequest, db: Session
-) -> None:
-    if (
-        _valida_numero_de_registros(
-            db,
-            conta_a_pagar_receber_request.data_previsao.year,
-            conta_a_pagar_receber_request.data_previsao.month,
-        )
-        > 100
-    ):
-        raise HTTPException(
-            status_code=422, detail="Você não pode lançar contas nesse mês"
-        )
-
-
-def _valida_numero_de_registros(db: Session, ano: int, mes: int) -> int:
-    return (
-        db.query(ContaPagarReceber)
-        .filter(extract("year", ContaPagarReceber.data_previsao) == ano)
-        .filter(extract("month", ContaPagarReceber.data_previsao) == mes)
-        .count()
-    )
+   
