@@ -1,1 +1,1 @@
-SQL_ALCHEMY_DATABASE_URL="postgresql://postgres:1234@localhost/db_fast_api_zero_ate_deploy"
+SQL_ALCHEMY_DATABASE_URL=postgresql://postgres:1234@localhost/db_fast_api_zero_ate_deploy
