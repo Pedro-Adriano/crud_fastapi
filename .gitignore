@@ -1,1 +1,6 @@
 test.db
+.pytest_cache
+.ruff_cache
+.venv
+.idea
+__pycache__
