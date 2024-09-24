@@ -1,5 +1,5 @@
 from fastapi import Depends, APIRouter
-from typing import List, Type
+from typing import List
 
 from sqlalchemy.orm import Session
 
@@ -7,6 +7,7 @@ from app.models.bills_models import ContaPagarReceber
 from app.routers.bills_router import (
     ContaPagarReceberResponse,
 )
+from app.services.supplier_and_customer_bills_service import SupplierCustomerBills
 from shared.dependencies import get_db
 
 
@@ -18,9 +19,7 @@ router = APIRouter(prefix="/fornecedor-cliente")
     response_model=List[ContaPagarReceberResponse],
 )
 def get_all_bills_of_supplier(
-    id_fornecedor: int, db: Session = Depends(get_db)
-) -> list[Type[ContaPagarReceber]]:
+    supplier_id: int, db: Session = Depends(get_db)
+) -> list[ContaPagarReceber]:
 
-    return (
-        db.query(ContaPagarReceber).filter_by(fornecedor_cliente_id=id_fornecedor).all()
-    )
+    return SupplierCustomerBills().get_all_bills_of_supplier(supplier_id, db)
